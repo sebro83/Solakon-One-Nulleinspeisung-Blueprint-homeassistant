@@ -477,7 +477,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 'Inverter export (PV priorität)'
+                          option: 1 #'Inverter export (PV priorität)'
           
           # FALL B: ZONE 3 - Sicherheits-STOPP (SOC <= Untere Schwelle UND Zyklus ON)
           - conditions:
@@ -583,7 +583,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 'Inverter export (PV priorität)'
+                          option: 1 #'Inverter export (PV priorität)'
           
           - conditions:
               # Nachtabschaltung aktiviert
@@ -792,6 +792,7 @@ action:
       value: "{{ [0, final_power_calculated] | max | round(0) }}"
   - delay:
       seconds: '{{wait_time_int}}'
+
 
 
 
