@@ -505,7 +505,7 @@ action:
                   option: 'aus'
               # 2. Modus-Wechsel zu 'Disabled'
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'Disabled' }}"
+                  - conditions: "{{ states(solakon_mode) != '0' }}" # Disabled
                     sequence:
                       - service: select.select_option
                         data:
@@ -529,7 +529,7 @@ action:
             sequence:
               # Modus auf 'Disabled' setzen
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'Disabled' }}"
+                  - conditions: "{{ states(solakon_mode) != '0' }}" # Disabled
                     sequence:
                       - service: select.select_option
                         data:
@@ -792,6 +792,7 @@ action:
       value: "{{ [0, final_power_calculated] | max | round(0) }}"
   - delay:
       seconds: '{{wait_time_int}}'
+
 
 
 
