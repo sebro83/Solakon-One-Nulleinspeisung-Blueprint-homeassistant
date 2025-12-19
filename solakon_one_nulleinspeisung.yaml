@@ -46,17 +46,18 @@ blueprint:
     * **Anti-Windup:** Der Integral-Wert ist auf ±1000 Punkte begrenzt.
       
   domain: automation
-  source_url: https://github.com/D4nte85/Solakon-One-Nulleinspeisung-Blueprint-homeassistant/edit/main/solakon_one_nulleinspeisung.yaml
+  source_url: https://github.com/sebro83/Solakon-One-Nulleinspeisung-Blueprint-homeassistant/blob/main/solakon_one_nulleinspeisung.yaml
   input:
     # ═══════════════════════════════════════════════════════════════════════════════════════════════
     # 🔌 NETZ-SENSOR (Extern - z.B. Shelly 3EM)
     # ═══════════════════════════════════════════════════════════════════════════════════════════════
     
     grid_power_sensor:
-      name: 🔌 Shelly/Netz-Leistungssensor (ERFORDERLICH)
+      name: 🔌 Netz-Leistungssensor (ERFORDERLICH)
       description: |
         Sensor für die aktuelle Netzleistung (z.B. Shelly 3EM).
         ⚠️ WICHTIG: Positive Werte = Bezug, NEGATIVE WERTE = Einspeisung.
+      default: sensor.iometer_leistung
       selector:
         entity:
           domain: sensor
@@ -131,10 +132,10 @@ blueprint:
     cycle_active_input_select:
       name: 🛠️ Entladezyklus-Zustandsspeicher (input_select - ERFORDERLICH!)
       description: |
-        ⚠️ WICHTIG: Erstellen Sie einen Input Select Helfer mit den Optionen 'on' und 'off'.
+        ⚠️ WICHTIG: Erstellen Sie einen Input Select Helfer mit den Optionen 'an' und 'aus'.
         Settings → Devices & Services → Helpers → Create Helper → Dropdown
         - Name: z.B. 'SOC Entladezyklus Status'
-        - Options: 'on' und 'off' (exakt so!)
+        - Options: 'an' und 'aus' (exakt so!)
         
         Dieser speichert, ob der Entladezyklus aktiv ist (Zone 1).
       default: input_select.soc_entladezyklus_status
@@ -442,7 +443,7 @@ action:
                 value_template: "{{ states(soc) | float(0) > soc_fast_limit_int }}"
               - condition: state
                 entity_id: !input cycle_active_input_select
-                state: 'off'
+                state: 'aus'
             sequence:
               # Logging
               - service: logbook.log
@@ -455,14 +456,14 @@ action:
                 data:
                   entity_id: !input integral_helper
                   value: 0
-              # 1. Zyklus auf 'on' setzen
+              # 1. Zyklus auf 'an' setzen
               - service: input_select.select_option
                 data:
                   entity_id: !input cycle_active_input_select
-                  option: 'on'
+                  option: 'an'
               # 2. Modus-Wechsel zu 'INV Discharge PV Priority' (mit Puls-Sequenz zur Sicherheit)
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'INV Discharge (PV Priority)' }}"
+                  - conditions: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
                     sequence:
                       - service: number.set_value
                         data:
@@ -476,7 +477,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 'INV Discharge (PV Priority)'
+                          option: 'Inverter export (PV priorität)'
           
           # FALL B: ZONE 3 - Sicherheits-STOPP (SOC <= Untere Schwelle UND Zyklus ON)
           - conditions:
@@ -484,7 +485,7 @@ action:
                 value_template: "{{ states(soc) | float(0) <= soc_conservation_limit_int }}"
               - condition: state
                 entity_id: !input cycle_active_input_select
-                state: 'on'
+                state: 'an'
             sequence:
               # Logging
               - service: logbook.log
@@ -497,11 +498,11 @@ action:
                 data:
                   entity_id: !input integral_helper
                   value: 0
-              # 1. Zyklus auf 'off' setzen
+              # 1. Zyklus auf 'aus' setzen
               - service: input_select.select_option
                 data:
                   entity_id: !input cycle_active_input_select
-                  option: 'off'
+                  option: 'aus'
               # 2. Modus-Wechsel zu 'Disabled'
               - choose:
                   - conditions: "{{ states(solakon_mode) != 'Disabled' }}"
@@ -522,9 +523,9 @@ action:
                 value_template: "{{ states(soc) | float(0) < soc_conservation_limit_int }}"
               - condition: state
                 entity_id: !input cycle_active_input_select
-                state: 'off'
+                state: 'aus'
               - condition: template
-                value_template: "{{ states(solakon_mode) != 'INV Discharge (PV Priority)' }}"
+                value_template: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
             sequence:
               # Modus auf 'Disabled' setzen
               - choose:
@@ -546,9 +547,9 @@ action:
                 value_template: "{{ states(soc) | float(0) > soc_conservation_limit_int and states(soc) | float(0) <= soc_fast_limit_int }}"
               - condition: state
                 entity_id: !input cycle_active_input_select
-                state: 'off'
+                state: 'aus'
               - condition: template
-                value_template: "{{ states(solakon_mode) != 'INV Discharge (PV Priority)' }}"
+                value_template: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
               # Nachtcheck: Nur starten wenn NICHT Nacht ODER Funktion deaktiviert
               - condition: template
                 value_template: >
@@ -568,7 +569,7 @@ action:
                   value: 0
               # Modus-Wechsel zu 'INV Discharge PV Priority'
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'INV Discharge (PV Priority)' }}"
+                  - conditions: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
                     sequence:
                       - service: number.set_value
                         data:
@@ -582,7 +583,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 'INV Discharge (PV Priority)'
+                          option: 'Inverter export (PV priorität)'
           
           - conditions:
               # Nachtabschaltung aktiviert
@@ -594,10 +595,10 @@ action:
               # Nur in Zone 2 (cycle = off)
               - condition: state
                 entity_id: !input cycle_active_input_select
-                state: 'off'
+                state: 'aus'
               # Modus ist aktuell aktiv
               - condition: template
-                value_template: "{{ states(solakon_mode) == 'INV Discharge (PV Priority)' }}"
+                value_template: "{{ states(solakon_mode) == 'Inverter export (PV priorität)' }}"
             sequence:
               # Logging
               - service: logbook.log
@@ -627,8 +628,8 @@ action:
   # -------------------------------------------------------------------------------------------------
   - condition: template
     value_template: >
-      {{ states(solakon_mode) == 'INV Discharge (PV Priority)' and
-         (is_state(cycle_active, 'on') or 
+      {{ states(solakon_mode) == 'Inverter export (PV priorität)' and
+         (is_state(cycle_active, 'an') or 
           not night_shutdown_enabled_bool or
           (states(solar_power_for_night_check) | float(0)) >= night_pv_threshold) }}
     
@@ -667,7 +668,7 @@ action:
 
       # Target Offset basiert auf Zone (0 W in Zone 1, Offset_Int in Zone 2)
       target_offset: >
-        {% if is_state(cycle_active, 'on') %}
+        {% if is_state(cycle_active, 'an') %}
           0
         {% else %}
           {{ offset_int }}
@@ -682,7 +683,7 @@ action:
      # PI-Regler Berechnung
       # 1. Aktueller Fehler 
       error: >
-        {% if is_state(cycle_active, 'on') %}
+        {% if is_state(cycle_active, 'an') %}
           {# ZONE 1: Min(verfügbare Kapazität, Grid) #}
           {{ [(max_active_power_limit_int - current_active_power), grid_power_float] | min | float(0) }}
         {% else %}
@@ -718,7 +719,7 @@ action:
       # 5. Finale Power: Logik in einem Template zusammengefasst
       final_power_calculated: >
         {% set p_regler_power = new_power_unlimited | float(0) %}
-        {% if is_state(cycle_active, 'on') %}
+        {% if is_state(cycle_active, 'an') %}
           {# ZONE 1: Hard Limit #}
           {{ [max_active_power_limit_int, p_regler_power] | min | float(0) }}
         {% else %}
@@ -732,7 +733,7 @@ action:
       - conditions:
           - condition: state
             entity_id: !input cycle_active_input_select
-            state: 'on'
+            state: 'an'
           - condition: template
             value_template: >
               {# Prüfe, ob der aktuelle Wert NICHT dem Maximalwert entspricht #}
@@ -747,7 +748,7 @@ action:
       - conditions:
           - condition: state
             entity_id: !input cycle_active_input_select
-            state: 'off'
+            state: 'aus'
           - condition: template
             value_template: >
               {# Prüfe, ob der aktuelle Wert NICHT 0 A entspricht #}
@@ -791,6 +792,7 @@ action:
       value: "{{ [0, final_power_calculated] | max | round(0) }}"
   - delay:
       seconds: '{{wait_time_int}}'
+
 
 
 
