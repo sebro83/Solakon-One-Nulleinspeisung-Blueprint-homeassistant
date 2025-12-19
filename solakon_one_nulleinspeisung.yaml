@@ -463,7 +463,7 @@ action:
                   option: 'an'
               # 2. Modus-Wechsel zu 'INV Discharge PV Priority' (mit Puls-Sequenz zur Sicherheit)
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
+                  - conditions: "{{ states(solakon_mode) != '1' }}" #Inverter export (PV priorität)
                     sequence:
                       - service: number.set_value
                         data:
@@ -477,7 +477,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 1 #'Inverter export (PV priorität)'
+                          option: "1" #'Inverter export (PV priorität)'
           
           # FALL B: ZONE 3 - Sicherheits-STOPP (SOC <= Untere Schwelle UND Zyklus ON)
           - conditions:
@@ -525,7 +525,7 @@ action:
                 entity_id: !input cycle_active_input_select
                 state: 'aus'
               - condition: template
-                value_template: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
+                value_template: "{{ states(solakon_mode) != '1' }}" # Inverter export (PV priorität)
             sequence:
               # Modus auf 'Disabled' setzen
               - choose:
@@ -549,7 +549,7 @@ action:
                 entity_id: !input cycle_active_input_select
                 state: 'aus'
               - condition: template
-                value_template: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
+                value_template: "{{ states(solakon_mode) != '1' }}" # Inverter export (PV priorität)
               # Nachtcheck: Nur starten wenn NICHT Nacht ODER Funktion deaktiviert
               - condition: template
                 value_template: >
@@ -569,7 +569,7 @@ action:
                   value: 0
               # Modus-Wechsel zu 'INV Discharge PV Priority'
               - choose:
-                  - conditions: "{{ states(solakon_mode) != 'Inverter export (PV priorität)' }}"
+                  - conditions: "{{ states(solakon_mode) != '1' }}" # Inverter export (PV priorität)
                     sequence:
                       - service: number.set_value
                         data:
@@ -583,7 +583,7 @@ action:
                       - service: select.select_option
                         data:
                           entity_id: !input mode_select
-                          option: 1 #'Inverter export (PV priorität)'
+                          option: "1" # 'Inverter export (PV priorität)'
           
           - conditions:
               # Nachtabschaltung aktiviert
@@ -598,7 +598,7 @@ action:
                 state: 'aus'
               # Modus ist aktuell aktiv
               - condition: template
-                value_template: "{{ states(solakon_mode) == 'Inverter export (PV priorität)' }}"
+                value_template: "{{ states(solakon_mode) == '1' }}" # Inverter export (PV priorität)
             sequence:
               # Logging
               - service: logbook.log
@@ -792,6 +792,7 @@ action:
       value: "{{ [0, final_power_calculated] | max | round(0) }}"
   - delay:
       seconds: '{{wait_time_int}}'
+
 
 
 
