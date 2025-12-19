@@ -626,9 +626,9 @@ action:
   # AKTION E: PI-Regler Logik, Timeout-Refresh UND Entlade-Limit-Absicherung
   # NUR ausführen wenn Modus aktiv ist UND (Zone 1 ODER Tag)!
   # -------------------------------------------------------------------------------------------------
-  - condition: template
+  - condition: template # Inverter export (PV priorität)
     value_template: >
-      {{ states(solakon_mode) == 'Inverter export (PV priorität)' and
+      {{ states(solakon_mode) == '1' and 
          (is_state(cycle_active, 'an') or 
           not night_shutdown_enabled_bool or
           (states(solar_power_for_night_check) | float(0)) >= night_pv_threshold) }}
@@ -792,6 +792,7 @@ action:
       value: "{{ [0, final_power_calculated] | max | round(0) }}"
   - delay:
       seconds: '{{wait_time_int}}'
+
 
 
 
